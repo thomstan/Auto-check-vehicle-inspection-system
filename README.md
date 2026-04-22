@@ -1,7 +1,7 @@
-#AutoCheck - Vehicle Inspection Management System
+# AutoCheck - Vehicle Inspection Management System
 A robust full-stack application built to manage vehicle inspection centers, track real-time inspection metrics, and monitor financial status.
 
-##🚀 Features
+## 🚀 Features
 Role-Based Access: Distinct portals for Admins and Inspection Centers.
 
 Real-Time Analytics: Visualize pass/fail rates and daily/monthly counts.
@@ -10,14 +10,14 @@ Financial Tracking: Automated balance calculation based on inspection fees.
 
 Secure Authentication: JWT-based login system.
 
-##🛠 Tech Stack
+## 🛠 Tech Stack
 Frontend: HTML5, TailwindCSS, Chart.js
 
 Backend: Node.js, Express.js
 
 Database: PostgreSQL
 
-##📦 Installation & Setup
+## 📦 Installation & Setup
 1. Clone the project
 git clone https://github.com/thomstan/Auto-check-vehicle-inspection-system.git
 cd Auto-check-vehicle-inspection-system
@@ -38,5 +38,5 @@ Bash
 node server.js
 The application will be available at http://localhost:5000.
 
-##🤝 Contributing
+## 🤝 Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
