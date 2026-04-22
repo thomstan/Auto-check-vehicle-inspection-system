@@ -25,9 +25,7 @@ app.use("/api/dashboard", dashboardRoutes);
 console.log('Payment Routes:', paymentRoutes);
 console.log('Inspection Routes:', inspectionRoutes); 
 app.use("/api/payments", paymentRoutes);
-app.get("/", (req, res) => {
-  res.send("Vehicle Inspection API Running");
-});
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
