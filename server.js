@@ -23,14 +23,13 @@ app.use("/api", authRoutes);
 app.use("/api", inspectionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 console.log('Payment Routes:', paymentRoutes);
-console.log('Inspection Routes:', inspectionRoutes);
-app.use('/api/payments', paymentRoutes); 
+console.log('Inspection Routes:', inspectionRoutes); 
 app.use("/api/payments", paymentRoutes);
 app.get("/", (req, res) => {
   res.send("Vehicle Inspection API Running");
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   
