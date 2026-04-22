@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoCheck | Master Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-100 flex">
+
+    <aside class="w-64 bg-slate-900 text-white min-h-screen p-6 fixed">
+        <h1 class="text-2xl font-bold mb-8 text-blue-400 italic">Admin Panel</h1>
+        <nav class="space-y-4">
+            <a href="#" class="block p-3 bg-slate-800 rounded-lg"><i class="fas fa-university mr-2"></i> Centers</a>
+            <a href="global_report.html" class="block p-3 hover:bg-slate-800 rounded-lg"><i class="fas fa-file-contract mr-2"></i> Global Reports</a>
+            <button onclick="logout()" class="w-full text-left p-3 hover:bg-slate-800 rounded-lg text-red-400 mt-10">
+                 <i class="fas fa-power-off mr-2"></i> Logout
+            </button>
+        </nav>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8">
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-blue-500">
+                <p class="text-gray-500 text-sm">Total Centers</p>
+                <h2 id="stat-centers" class="text-3xl font-bold text-slate-800">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-green-500">
+                <p class="text-gray-500 text-sm">Total Inspections</p>
+                <h2 id="stat-inspections" class="text-3xl font-bold text-slate-800">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-red-500">
+                <p class="text-gray-500 text-sm">Total Revenue Due</p>
+                <h2 id="stat-revenue" class="text-3xl font-bold text-slate-800">0 ETB</h2>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">Manage Inspection Centers</h3>
+                <button onclick="openAddCenterModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Add New Center</button>
+            </div>
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 text-gray-400 text-xs uppercase font-bold">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase">Center Details</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase">Inspections (Daily/Total)</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase">Balance (Total/Fee)</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase">Status</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase">Expiry</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminCenterList" class="divide-y text-sm"></tbody>
+            </table>
+        </div>
+
+        <div id="addCenterModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">Register New Center</h3>
+                    <button onclick="closeAddCenterModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                </div>
+                <form id="addCenterForm" class="space-y-4">
+                    <input type="text" id="centerName" required class="w-full p-3 border rounded-xl" placeholder="Center Name">
+                    <input type="text" id="centerLocation" required class="w-full p-3 border rounded-xl" placeholder="Location">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="centerUser" required class="w-full p-3 border rounded-xl" placeholder="Username">
+                        <input type="password" id="centerPass" required class="w-full p-3 border rounded-xl" placeholder="Password">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Create Center</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">Manage Center</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="space-y-4">
+                    <input type="hidden" id="edit-id">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">Center Name</label>
+                        <input type="text" id="edit-name" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">Username</label>
+                        <input type="text" id="edit-username" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">New Password (Leave blank to keep)</label>
+                        <input type="password" id="edit-password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
+                    </div>
+                    <div>
+                       <label class="text-[10px] font-bold text-gray-400 uppercase">Fee Per Inspection (ETB)</label>
+                       <input type="number" id="edit-fee" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">System Status</label>
+                        <select id="edit-status" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="true">Active (System Enabled)</option>
+                            <option value="false">Suspended (System Blocked)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-3 mt-6">
+                        <button onclick="saveChanges()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Save Updates</button>
+                        <button onclick="handleDelete()" class="w-full text-red-500 py-2 text-sm font-bold border border-red-100 rounded-xl hover:bg-red-50">Delete Center Permanently</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let allCenters = [];
+
+        async function fetchAdminData() {
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+
+            if (!token || role !== 'admin') {
+                localStorage.clear(); 
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const requestOptions = {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                };
+
+                const statRes = await fetch('http://localhost:5000/api/admin/stats', requestOptions);
+                const stats = await statRes.json();
+                document.getElementById('stat-centers').innerText = stats.total_centers || 0;
+                document.getElementById('stat-inspections').innerText = stats.total_inspections || 0;
+                document.getElementById('stat-revenue').innerText = `${stats.total_receivable || 0} ETB`;
+
+                const centerRes = await fetch('http://localhost:5000/api/admin/centers', requestOptions);
+                allCenters = await centerRes.json();
+                
+                const centersOnly = allCenters.filter(user => user.role !== 'admin');
+                const tbody = document.getElementById('adminCenterList');
+
+                tbody.innerHTML = centersOnly.map(c => {
+                    const isActive = getStatus(c); 
+                    return `
+                        <tr class="hover:bg-gray-50 border-b">
+                            <td class="p-4">
+                                <div class="font-bold text-slate-800">${c.name}</div>
+                                <div class="text-[10px] text-gray-400">${c.location || 'No Location'}</div>
+                            </td>
+                           
+                            <td class="px-6 py-4">
+                              <div class="font-bold text-blue-600">${c.daily_count} Today</div>
+                              <div class="text-[11px] text-gray-400">${c.monthly_count} This Month</div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                               <div class="font-bold text-gray-800">${parseFloat(c.current_balance).toFixed(2)} ETB</div>
+                               <div class="text-[11px] text-gray-400">Rate: ${c.fee_per_inspection} / Insp</div>
+                             </td>
+                              <td class="p-4">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                    ${isActive ? 'Active' : 'Blocked'}
+                                </span>
+                            </td>
+                            <td class="p-4 text-gray-500 text-xs">
+                                ${new Date(c.payment_expiry).toLocaleDateString()}
+                            </td>
+                            <td class="p-4 flex gap-3">
+                                <button onclick='openEditModal(${JSON.stringify(c)})' class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>
+                                ${!isActive ? `
+                                    <button onclick="approveCenter(${c.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold">Approve</button>
+                                ` : `
+                                    <span class="text-green-600 text-[10px] font-bold pt-1"><i class="fas fa-check"></i> Paid</span>
+                                `}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("Dashboard Load Error:", err);
+            }
+        }
+
+        function getStatus(center) {
+            const now = new Date();
+            const expiryDate = new Date(center.payment_expiry);
+            const isSwitchedOn = (center.payment_status === true || center.payment_status === 't');
+            const isNotExpired = expiryDate > now;
+            return (isSwitchedOn && isNotExpired);
+        }
+
+        // --- MANAGEMENT FUNCTIONS ---
+
+        function openEditModal(center) {
+            document.getElementById('edit-id').value = center.id;
+            document.getElementById('edit-name').value = center.name;
+            document.getElementById('edit-username').value = center.username;
+            document.getElementById('edit-status').value = center.payment_status ? "true" : "false";
+            document.getElementById('edit-password').value = ""; // Clear password field
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+async function saveChanges() {
+
+    const id = document.getElementById('edit-id').value.trim(); 
+    const fee = document.getElementById('edit-fee').value;
+    
+    const payload = {
+        name: document.getElementById('edit-name').value,
+        username: document.getElementById('edit-username').value,
+        password: document.getElementById('edit-password').value,
+        payment_status: document.getElementById('edit-status').value === "true"
+    };
+    // 2. Update the Fee specifically
+    await fetch(`http://localhost:5000/api/admin/centers/fee/${id}`, {
+        method: 'PUT',
+        headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ fee_per_inspection: fee })
+    });
+
+    try {
+        // Double check this URL structure matches your backend route exactly
+        const res = await fetch(`http://localhost:5000/api/admin/centers/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            alert("Center details updated!");
+            closeEditModal();
+            fetchAdminData();
+        } else if (res.status === 404) {
+            console.error("Route not found. Check if the backend has: router.put('/centers/:id')");
+        }
+    } catch (err) {
+        console.error("Update failed:", err);
+    }
+}
+
+        async function handleDelete() {
+            const id = document.getElementById('edit-id').value;
+            if(!confirm("Are you absolutely sure? This will delete all inspection records for this center.")) return;
+
+            const res = await fetch(`http://localhost:5000/api/admin/centers/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+
+            if (res.ok) {
+                alert("Center deleted successfully.");
+                closeEditModal();
+                fetchAdminData();
+            }
+        }
+
+       async function approveCenter(id) {
+    if (!confirm("Confirm payment extension?")) return;
+
+    // You need these values. 
+    // If you don't have them in the UI, you need to prompt for them 
+    // or pull them from an input field.
+    const paymentData = {
+        center_id: id,
+        amount_paid: 2000, // Replace with your input value
+        billing_start: '2026-04-01', // Replace with your input value
+        billing_end: '2026-04-30'    // Replace with your input value
+    };
+
+    const res = await fetch(`http://localhost:5000/api/admin/centers/approve/${id}`, {
+        method: 'PUT',
+        headers: { 
+            'Content-Type': 'application/json', // CRITICAL: Tells server to parse JSON
+            'Authorization': `Bearer ${localStorage.getItem('token')}` 
+        },
+        body: JSON.stringify(paymentData) // The actual data package
+    });
+
+    if (res.ok) {
+        alert("Payment approved successfully");
+        fetchAdminData();
+    } else {
+        const errorData = await res.json();
+        alert("Error: " + errorData.message);
+    }
+}
+
+        // --- MODAL UTILS ---
+        function openAddCenterModal() { document.getElementById('addCenterModal').classList.remove('hidden'); }
+        function closeAddCenterModal() { document.getElementById('addCenterModal').classList.add('hidden'); }
+
+        document.getElementById('addCenterForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const newCenter = {
+                name: document.getElementById('centerName').value,
+                location: document.getElementById('centerLocation').value,
+                username: document.getElementById('centerUser').value,
+                password: document.getElementById('centerPass').value
+            };
+            const res = await fetch('http://localhost:5000/api/admin/centers/add', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(newCenter)
+            });
+            if (res.ok) {
+                closeAddCenterModal();
+                fetchAdminData();
+            }
+        };
+
+        function logout() {
+            if(confirm("Logout?")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        fetchAdminData();
+    </script>
+</body>
+</html>

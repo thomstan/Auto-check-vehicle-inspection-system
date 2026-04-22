@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCheck | Reports & Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
+            <div class="p-6 text-2xl font-bold border-b border-slate-700 italic">
+                <i class="fas fa-car-side text-blue-400 mr-2"></i>AutoCheck
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="inspection_dasboard.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-chart-line mr-3"></i> Dashboard</a>
+                <a href="#" class="flex items-center p-3 bg-blue-600 rounded-lg"><i class="fas fa-file-invoice mr-3"></i> Reports</a>
+                <a href="payment.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-credit-card mr-3"></i> Payments</a>
+                 <button onclick="logout()" class="w-full text-left p-3 hover:bg-slate-800 rounded-lg text-red-400 mt-10">
+                 <i class="fas fa-power-off mr-2"></i> Logout
+            </button>
+            </nav>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+                <h1 class="text-xl font-semibold text-gray-800">Advanced Reports</h1>
+                <button onclick="downloadCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-download mr-2"></i>Export CSV
+                </button>
+            </header>
+
+            <div class="p-6 space-y-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">LIVE SEARCH (PLATE/ID)</label>
+                        <input type="text" id="searchBar" placeholder="Search..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+                    </div>
+                    <div>
+                         <label class="block text-xs font-semibold text-gray-500 mb-1">START DATE</label>
+                         <input type="date" id="startDate" class="w-full px-3 py-2 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">END DATE</label>
+                        <input type="date" id="endDate" class="w-full px-3 py-2 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">VEHICLE TYPE</label>
+                        <select id="filterVehicle" class="w-full px-3 py-2 border rounded-lg outline-none">
+                            <option value="">All Types</option>
+                            <option value="Automobile">Automobile</option>
+                            <option value="Autobus">Autobus</option>
+                            <option value="Truck">Truck</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">FUEL TYPE</label>
+                        <select id="filterFuel" class="w-full px-3 py-2 border rounded-lg outline-none">
+                            <option value="">All Fuels</option>
+                            <option value="Petrol">Petrol</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Benzene">Benzene</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="Electric">Electric</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">STATUS</label>
+                        <select id="filterStatus" class="w-full px-3 py-2 border rounded-lg outline-none">
+                            <option value="">All Results</option>
+                            <option value="PASS">Pass</option>
+                            <option value="FAIL">Fail</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="fetchFilteredData()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Apply Filters</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-400 text-sm uppercase bg-gray-50">
+                                <th class="p-4 font-medium">Plate Number / ID</th>
+                                <th class="p-4 font-medium">Vehicle Type</th>
+                                <th class="p-4 font-medium">Fuel</th>
+                                <th class="p-4 font-medium">Status</th>
+                                <th class="p-4 font-medium">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTable" class="divide-y divide-gray-100 text-sm">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:5000/api/dashboard";
+        const center_id = localStorage.getItem("center_id");
+        let allData = []; // Store data locally for live search
+
+        document.addEventListener('DOMContentLoaded', fetchFilteredData);
+
+        // Fetch data from backend with active filters
+        async function fetchFilteredData() {
+            const vehicle = document.getElementById('filterVehicle').value;
+            const fuel = document.getElementById('filterFuel').value;
+            const status = document.getElementById('filterStatus').value;
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+
+            const url = `${API_BASE}/inspections?center_id=${center_id}&vehicle_type=${vehicle}&fuel_type=${fuel}&result=${status}&start_date=${start}&end_date=${end}`;
+            
+            try {
+                const res = await fetch(url);
+                allData = await res.json();
+                renderTable(allData);
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+        }
+
+        // Live Search Logic (Filters the current visible data)
+        document.getElementById('searchBar').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allData.filter(i => 
+                i.plate_number.toLowerCase().includes(term) || 
+                i.inspection_id.toString().includes(term)
+            );
+            renderTable(filtered);
+        });
+
+        function renderTable(data) {
+            const tbody = document.getElementById('reportTable');
+            tbody.innerHTML = data.map(i => `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-700">${i.plate_number}</div>
+                        <div class="text-xs text-gray-400">ID: ${i.inspection_id}</div>
+                    </td>
+                    <td class="p-4 text-gray-600">${i.vehicle_type}</td>
+                    <td class="p-4 text-gray-600">${i.fuel_type}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 ${i.result === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-full text-xs font-bold">
+                            ${i.result}
+                        </span>
+                    </td>
+                    <td class="p-4 text-gray-500">${new Date(i.inspection_date).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Export Function (Uses the download route in your dashboardRoutes.js)
+        function downloadCSV() {
+            const vehicle = document.getElementById('filterVehicle').value;
+            const fuel = document.getElementById('filterFuel').value;
+            const status = document.getElementById('filterStatus').value;
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            const downloadUrl = `${API_BASE}/inspections/download?center_id=${center_id}&vehicle_type=${vehicle}&fuel_type=${fuel}&result=${status}&start_date=${start}&end_date=${end}`;
+            window.location.href = downloadUrl;
+        }
+    function logout() {
+            if(confirm("Logout?")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

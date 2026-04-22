@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCheck | Billing & Payments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
+            <div class="p-6 text-2xl font-bold border-b border-slate-700 italic">
+                <i class="fas fa-car-side text-blue-400 mr-2"></i>AutoCheck
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="inspection_dasboard.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-chart-line mr-3"></i> Dashboard</a>
+                <a href="report.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-file-invoice mr-3"></i> Reports</a>
+                <a href="#" class="flex items-center p-3 bg-blue-600 rounded-lg"><i class="fas fa-credit-card mr-3"></i> Payments</a>
+                <button onclick="logout()" class="w-full text-left p-3 hover:bg-slate-800 rounded-lg text-red-400 mt-10">
+                 <i class="fas fa-power-off mr-2"></i> Logout
+            </button>
+            </nav>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+                <h1 class="text-xl font-semibold text-gray-800">Billing & Accrued Fees</h1>
+                <div id="status-badge"></div>
+            </header>
+
+            <div class="p-6 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-calculator text-6xl"></i></div>
+                        <p class="text-gray-500 font-medium">Current Month's Running Tab</p>
+                        <h2 id="running-tab" class="text-4xl font-black text-slate-800 mt-2">0.00 ETB</h2>
+                        <p class="text-xs text-blue-500 mt-4"><i class="fas fa-sync-alt fa-spin mr-1"></i> Updates instantly after every inspection</p>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-gray-500 font-medium">Last Month's Payment Status</p>
+                        <h2 id="payment-deadline" class="text-xl font-bold text-gray-700 mt-2">Checking...</h2>
+                        <div id="payment-status-text" class="mt-4 text-sm"></div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-xl">
+                    <div class="flex">
+                        <div class="flex-shrink-0"><i class="fas fa-info-circle text-blue-500"></i></div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-bold text-blue-800 uppercase">Post-Pay Policy</h3>
+                            <p class="text-sm text-blue-700 mt-1">
+                                Inspections performed this month will be invoiced on the 1st of next month. 
+                                Please ensure previous invoices are settled by your expiry date to avoid account suspension.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 mt-6">
+                  <h3 class="text-lg font-bold mb-4">Payment Transaction History</h3>
+                <div class="overflow-x-auto">
+                   <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount (ETB)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Billing Period</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                       </tr>
+                    </thead>
+                    <tbody id="payment-history-table" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                   </table>
+                </div>
+            </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    const center_id = localStorage.getItem("center_id");
+async function loadPaymentData() {
+    try {
+        const centerId = localStorage.getItem('center_id');
+        const token = localStorage.getItem('token');
+
+        const response = await fetch(`http://localhost:5000/api/dashboard/centers/${centerId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch center data');
+        
+        const centerData = await response.json();
+
+        // 1. Update Running Tab
+        document.getElementById('running-tab').innerText = `${Number(centerData.current_balance || 0).toFixed(2)} ETB`;
+
+        // 2. Update Deadline
+        const deadlineEl = document.getElementById('payment-deadline');
+        if (deadlineEl && centerData.payment_expiry) {
+            deadlineEl.innerText = new Date(centerData.payment_expiry).toLocaleDateString();
+        } else if (deadlineEl) {
+            deadlineEl.innerText = "No Date Set";
+        }
+
+        // 3. Update Status Text
+        const statusEl = document.getElementById('payment-status-text');
+        if (statusEl) {
+            if (centerData.payment_status === true) {
+                statusEl.innerHTML = '<span class="text-green-600 font-bold">● Active Account</span>';
+            } else {
+                statusEl.innerHTML = '<span class="text-red-600 font-bold">● Suspended / Due</span>';
+            }
+        }
+
+        // Now call the history loader
+        loadPaymentHistory(centerId);
+
+    } catch (error) {
+        console.error("Error loading billing info:", error);
+    }
+}
+
+async function loadPaymentHistory(centerId) {
+    const tableBody = document.getElementById('payment-history-table');
+    if (!tableBody) return; // Prevents the 'null' error if element is missing
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/payments/payment-history/${centerId}`);
+        const history = await response.json();
+
+        if (!history || history.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-400">No transactions found.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = history.map(p => `
+            <tr class="border-b">
+                <td class="py-4 px-4">${new Date(p.payment_date).toLocaleDateString()}</td>
+                <td class="py-4 px-4 font-bold">${p.amount_paid} ETB</td>
+                <td class="py-4 px-4 text-gray-600">
+                    ${new Date(p.billing_period_start).toLocaleDateString()} - ${new Date(p.billing_period_end).toLocaleDateString()}
+                </td>
+                <td class="py-4 px-4">
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Completed</span>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("History Error:", err);
+    }
+}
+        // Initialize
+        if (!center_id) {
+            window.location.href = "login.html";
+        } else {
+            loadPaymentData();
+        }
+    function logout() {
+            if(confirm("Logout?")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

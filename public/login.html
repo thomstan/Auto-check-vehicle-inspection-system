@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCheck | Secure Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-white font-sans antialiased">
+
+    <div class="flex min-h-screen">
+        <div class="hidden lg:flex w-1/2 bg-slate-900 items-center justify-center p-12 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20">
+                <img src="https://images.unsplash.com/photo-1486006396193-471068589bca?auto=format&fit=crop&q=80" 
+                     class="w-full h-full object-cover" alt="Background">
+            </div>
+            <div class="relative z-10 max-w-md text-center">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-2xl mb-8 shadow-2xl">
+                    <i class="fas fa-shield-check text-white text-4xl"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-white mb-4 italic">AutoCheck Pro</h1>
+                <p class="text-slate-400 text-lg">The national standard for automated vehicle inspection management and compliance.</p>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16">
+            <div class="w-full max-w-md">
+                <div class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Welcome back</h2>
+                    <p class="text-slate-500">Please enter your credentials to access your dashboard.</p>
+                </div>
+
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-4 top-4 text-slate-400"></i>
+                            <input type="text" id="username" required 
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all outline-none"
+                                placeholder="Enter username">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-4 top-4 text-slate-400"></i>
+                            <input type="password" id="password" required 
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all outline-none"
+                                placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded border-slate-300 text-blue-600 shadow-sm focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-slate-600">Remember me</span>
+                        </label>
+                        <a href="#" class="text-sm font-semibold text-blue-600 hover:text-blue-700">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" 
+                        class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <span>Sign In</span>
+                        <i class="fas fa-arrow-right text-xs"></i>
+                    </button>
+                </form>
+
+                <footer class="mt-12 text-center">
+                    <p class="text-sm text-slate-500">
+                        &copy; 2026 AutoCheck Systems. All rights reserved.
+                    </p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Replace the script in login.html with this:
+document.getElementById('loginForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        const res = await fetch('http://localhost:5000/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // 1. Store the "Key" and the "Role"
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.role);
+
+            // 2. Redirect based on the role the server gave us
+            if (data.role === 'admin') {
+                window.location.href = 'admin.html';
+            } else {
+                // If it's a regular center, send them to their dashboard
+                localStorage.setItem("center_id", data.center_id);
+                window.location.href = 'inspection_dasboard.html'; 
+            }
+        } else {
+            alert(data.message || "Invalid Login");
+        }
+    } catch (err) {
+        console.error("Login Error:", err);
+        alert("Server is offline. Check if your Node.js backend is running.");
+    }
+};
+    </script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoCheck Admin | Global Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-slate-50 flex">
+    
+    <aside class="w-64 bg-slate-900 text-white min-h-screen p-6 fixed h-full">
+        <h1 class="text-2xl font-bold mb-8 text-blue-400 italic">Admin Panel</h1>
+        <nav class="space-y-4">
+            <a href="admin.html" class="block p-3 hover:bg-slate-800 rounded-lg"><i class="fas fa-university mr-2"></i> Centers</a>
+            <a href="global_report.html" class="block p-3 bg-blue-600 rounded-lg"><i class="fas fa-chart-pie mr-2"></i> Global Reports</a>
+            <button onclick="logout()" class="w-full text-left p-3 hover:bg-slate-800 rounded-lg text-red-400 mt-10">
+                <i class="fas fa-power-off mr-2"></i> Logout
+            </button>
+        </nav>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8">
+        <header class="mb-8">
+            <h2 class="text-2xl font-bold text-slate-800">Global System Analytics</h2>
+            <p class="text-gray-500">Comprehensive view of performance and fuel metrics</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-400 uppercase mb-4 text-center">Inspections per Center</h3>
+                <canvas id="centerCountChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-400 uppercase mb-4 text-center">Global Pass/Fail (Total)</h3>
+                <canvas id="globalResultChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-400 uppercase mb-4 text-center">Fuel Type Distribution</h3>
+                <canvas id="fuelChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-[200px]">
+                <input type="text" id="plateSearch" onkeyup="applyFilters()" placeholder="Search Plate Number..." 
+                       class="w-full pl-4 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <select id="centerFilter" onchange="applyFilters()" class="p-2 border rounded-lg outline-none bg-white">
+                <option value="all">All Centers</option>
+            </select>
+            <select id="resultFilter" onchange="applyFilters()" class="p-2 border rounded-lg outline-none bg-white">
+                <option value="all">All Results</option>
+                <option value="PASS">Pass</option>
+                <option value="FAIL">Fail</option>
+            </select>
+            <button onclick="downloadCSV()" class="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700">
+                <i class="fas fa-download mr-2"></i>Export CSV
+            </button>
+            <button onclick="downloadPDF()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                <i class="fas fa-file-pdf mr-2"></i>PDF Report
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-left border-collapse table-fixed">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+                    <tr>
+                        <th class="p-4 w-1/5">Date</th>
+                        <th class="p-4 w-1/5">Center</th>
+                        <th class="p-4 w-1/5">Plate</th>
+                        <th class="p-4 w-1/5">Fuel</th>
+                        <th class="p-4 w-1/5">Result</th>
+                    </tr>
+                </thead>
+                <tbody id="globalInspectionList" class="divide-y text-sm"></tbody>
+            </table>
+            <div id="paginationControls" class="p-4 bg-slate-50 border-t flex justify-between items-center"></div>
+        </div>
+    </main>
+
+    <script>
+        let allData = [];
+        let filteredData = []; // Store current filtered subset
+        let charts = {};
+        
+        // Pagination state
+        let currentPage = 1;
+        const rowsPerPage = 10;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            if (!token || role !== 'admin') {
+                window.location.href = 'login.html';
+            } else {
+                init();
+            }
+        });
+
+        async function init() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('http://localhost:5000/api/admin/inspections/all', {
+                    method: 'GET',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json' 
+                    }
+                });
+
+                if (!res.ok) {
+                    if(res.status === 403) window.location.href = 'login.html';
+                    throw new Error("Failed to fetch data");
+                }
+
+                allData = await res.json();
+                filteredData = allData; // Start with all data
+                
+                if (Array.isArray(allData)) {
+                    populateCenterFilter();
+                    renderTable(); // renderTable now uses filteredData + pagination
+                    renderCharts(allData); // Charts use full data context
+                }
+            } catch (err) {
+                console.error("Error loading report data:", err);
+                document.getElementById('globalInspectionList').innerHTML = '<tr><td colspan="5" class="p-8 text-center text-red-500">Server Error. Please try again.</td></tr>';
+            }
+        }
+
+        function populateCenterFilter() {
+            const centers = [...new Set(allData.map(i => i.center_name))];
+            const select = document.getElementById('centerFilter');
+            select.innerHTML = '<option value="all">All Centers</option>';
+            centers.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderCharts(data) {
+            const centerCounts = {};
+            data.forEach(i => centerCounts[i.center_name] = (centerCounts[i.center_name] || 0) + 1);
+            updateChart('centerCountChart', 'pie', Object.keys(centerCounts), Object.values(centerCounts), ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']);
+
+            const results = { PASS: 0, FAIL: 0 };
+            data.forEach(i => { if(results[i.result] !== undefined) results[i.result]++; });
+            updateChart('globalResultChart', 'doughnut', ['PASS', 'FAIL'], [results.PASS, results.FAIL], ['#10b981', '#ef4444']);
+
+            const fuels = {};
+            data.forEach(v => {
+                const type = v.fuel_type ? v.fuel_type.toUpperCase() : 'UNKNOWN';
+                fuels[type] = (fuels[type] || 0) + 1;
+            });
+            updateChart('fuelChart', 'bar', Object.keys(fuels), Object.values(fuels), ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']);
+        }
+
+        function updateChart(id, type, labels, values, colors) {
+            if (charts[id]) charts[id].destroy();
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            charts[id] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{ data: values, backgroundColor: colors }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        // --- UPDATED RENDER TABLE WITH PAGINATION ---
+        function renderTable() {
+            const tbody = document.getElementById('globalInspectionList');
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = filteredData.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-gray-400">No matching records found.</td></tr>';
+                document.getElementById('paginationControls').innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = pageData.map(i => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 text-gray-400 text-xs">${new Date(i.inspection_date).toLocaleDateString()}</td>
+                    <td class="p-4 font-bold text-slate-600 truncate">${i.center_name}</td>
+                    <td class="p-4 font-mono font-bold">${i.plate_number}</td>
+                    <td class="p-4 text-xs uppercase text-gray-500">${i.fuel_type || 'N/A'}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded-full text-[10px] font-black ${i.result === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            ${i.result}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            const controls = document.getElementById('paginationControls');
+            
+            controls.innerHTML = `
+                <span class="text-xs text-gray-500 font-medium">
+                    Showing ${((currentPage - 1) * rowsPerPage) + 1} to ${Math.min(currentPage * rowsPerPage, filteredData.length)} of ${filteredData.length}
+                </span>
+                <div class="flex gap-2">
+                    <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} 
+                        class="px-3 py-1 border rounded text-xs bg-white hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+                    <span class="px-3 py-1 text-xs font-bold text-blue-600 bg-blue-50 rounded border border-blue-200">
+                        ${currentPage} / ${totalPages}
+                    </span>
+                    <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} 
+                        class="px-3 py-1 border rounded text-xs bg-white hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+            `;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderTable();
+            // Scroll to top of table
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+        }
+
+        function applyFilters() {
+            const center = document.getElementById('centerFilter').value;
+            const result = document.getElementById('resultFilter').value;
+            const plate = document.getElementById('plateSearch').value.toUpperCase();
+
+            filteredData = allData.filter(i => {
+                const matchCenter = center === 'all' || i.center_name === center;
+                const matchResult = result === 'all' || i.result === result;
+                const matchPlate = i.plate_number.toUpperCase().includes(plate);
+                return matchCenter && matchResult && matchPlate;
+            });
+
+            currentPage = 1; // Reset to page 1 when filtering
+            renderTable();
+            renderCharts(filteredData);
+        }
+
+        function logout() {
+            if(confirm("Are you sure you want to log out?")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const today = new Date().toLocaleDateString();
+
+            doc.setFontSize(22);
+            doc.text("AutoCheck Global Analytics Report", 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Generated on: ${today}`, 20, 30);
+
+            const chartsContainer = document.querySelector('.grid');
+            const canvas = await html2canvas(chartsContainer);
+            const imgData = canvas.toDataURL('image/png');
+            doc.addImage(imgData, 'PNG', 10, 40, 190, 60); 
+
+            let yPos = 120;
+            doc.setFontSize(16);
+            doc.text("Numerical Summary", 20, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(10);
+            doc.text("Center Name", 20, yPos);
+            doc.text("Total Inspections", 80, yPos);
+            doc.text("Pass Rate", 140, yPos);
+            doc.line(20, yPos + 2, 190, yPos + 2);
+
+            const centerStats = {};
+            filteredData.forEach(i => {
+                if (!centerStats[i.center_name]) centerStats[i.center_name] = { total: 0, pass: 0 };
+                centerStats[i.center_name].total++;
+                if (i.result === 'PASS') centerStats[i.center_name].pass++;
+            });
+
+            yPos += 10;
+            Object.keys(centerStats).forEach(name => {
+                const stats = centerStats[name];
+                const passRate = ((stats.pass / stats.total) * 100).toFixed(1) + "%";
+                doc.text(name, 20, yPos);
+                doc.text(stats.total.toString(), 80, yPos);
+                doc.text(passRate, 140, yPos);
+                yPos += 8;
+            });
+
+            doc.save(`AutoCheck_Report_${today}.pdf`);
+        }
+
+        function downloadCSV() {
+            let csv = "Date,Center,Plate,Fuel,Result\n";
+            filteredData.forEach(i => {
+                csv += `${new Date(i.inspection_date).toLocaleDateString()},${i.center_name},${i.plate_number},${i.fuel_type},${i.result}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Global_Inspections.csv';
+            a.click();
+        }
+    </script>
+</body>
+</html>

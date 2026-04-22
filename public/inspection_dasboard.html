@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCheck | Inspection Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
+            <div class="p-6 text-2xl font-bold border-b border-slate-700 italic">
+                <i class="fas fa-car-side text-blue-400 mr-2"></i>AutoCheck
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="#" class="flex items-center p-3 bg-blue-600 rounded-lg"><i class="fas fa-chart-line mr-3"></i> Dashboard</a>
+                <a href="report.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-file-invoice mr-3"></i> Reports</a>
+                <a href="payment.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-credit-card mr-3"></i> Payments</a>
+                <button onclick="logout()" class="w-full text-left p-3 hover:bg-slate-800 rounded-lg text-red-400 mt-10">
+                 <i class="fas fa-power-off mr-2"></i> Logout
+            </button>
+            </nav>
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex items-center space-x-3">
+                    <div id="center-initials" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">
+                      AC
+                    </div>
+                    <div>
+                       <p id="display-center-name" class="text-sm font-medium">Loading...</p>
+                    <p id="display-center-id" class="text-xs text-gray-400">Center ID: --</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+                <h1 class="text-xl font-semibold text-gray-800">Inspection Overview</h1>
+                <button onclick="location.href='inspection.html'" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-2"></i>New Entry
+                </button>
+            </header>
+
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div id="card-total" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-blue-400 transition">
+        <p class="text-gray-500 text-sm">Today's Total</p>
+        <h2 id="total-today" class="text-2xl font-bold">0</h2>
+        <span class="text-blue-500 text-xs">View All Today</span>
+    </div>
+    
+    <div id="card-passed" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-green-400 transition">
+        <p class="text-gray-500 text-sm text-green-600">Passed</p>
+        <h2 id="passed-today" class="text-2xl font-bold text-green-700">0</h2>
+        <span class="text-gray-400 text-xs">View Passed</span>
+    </div>
+    
+    <div id="card-failed" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-red-400 transition">
+        <p class="text-gray-500 text-sm text-red-600">Failed</p>
+        <h2 id="failed-today" class="text-2xl font-bold text-red-700">0</h2>
+        <span class="text-gray-400 text-xs">View Failed</span>
+    </div>
+    
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+        <p class="text-gray-500 text-sm text-blue-600">Account Status</p>
+        <h2 id="account-status" class="text-xl font-bold text-blue-700 uppercase">Active</h2>
+    </div>
+</div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-700 mb-4">Today's Fuel Distribution</h3>
+                        <div class="relative h-[250px]">
+                            <canvas id="fuelChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-700 mb-4">Today's Pass vs Fail Overview</h3>
+                        <div class="relative h-[250px]">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-4 border-b bg-gray-50">
+                        <h3 class="font-bold text-gray-700">Recent Inspections</h3>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-400 text-sm uppercase bg-gray-50">
+                                <th class="p-4 font-medium">Plate Number</th>
+                                <th class="p-4 font-medium">Fuel Type</th>
+                                <th class="p-4 font-medium">Chassis_number</th>
+                                <th class="p-4 font-medium">Engine_number</th>
+                                <th class="p-4 font-medium">Status</th>
+                                <th class="p-4 font-medium">Date</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody id="inspectionTable" class="divide-y divide-gray-100 text-sm">
+                            <tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+const API_BASE = "http://localhost:5000/api";
+const center_id = localStorage.getItem("center_id");
+// Global variables to track chart instances and prevent repetition
+let fuelChartInstance = null;
+let statusChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!center_id) {
+        window.location.href = "login.html";
+        return;
+    }
+    // Set Center ID in sidebar if element exists
+    const idDisplay = document.getElementById('display-center-id');
+    if(idDisplay) idDisplay.innerText = `Center ID: ${center_id}`;
+    
+    initDashboard();
+});
+let allInspections = []; // Store the full list globally
+async function initDashboard() {
+    const token = localStorage.getItem('token');
+    
+    // 1. Fetch Inspections first so the data shows up even if profile fails
+    try {
+        const inspRes = await fetch(`${API_BASE}/dashboard/inspections?center_id=${center_id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (inspRes.ok) {
+            allInspections = await inspRes.json();
+            
+            // Render the data immediately
+            const localToday = getLocalDay(new Date());
+            const todayData = allInspections.filter(i => getLocalDay(i.inspection_date) === localToday);
+            
+            updateStatCards(todayData);
+            updateRecentTable(todayData);
+            setupCardFilters();
+            renderFuelChartFromData(todayData);
+            renderStatusChartFromData(todayData);
+        }
+    } catch (err) {
+        console.error("Inspection Data Error:", err);
+    }
+
+    // 2. Separately fetch the Status so it doesn't break the charts
+    try {
+        const profileRes = await fetch(`${API_BASE}/dashboard/centers/${center_id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (profileRes.ok) {
+            const centerProfile = await profileRes.json();
+            updateAccountStatusUI(centerProfile);
+        } else {
+            // If profile route is missing, fallback to a safe check
+            console.warn("Profile route not found, using fallback status.");
+            if (allInspections.length > 0) {
+                updateAccountStatusUI(allInspections[0]); 
+            }
+        }
+    } catch (err) {
+        console.error("Status Check Error:", err);
+    }
+}
+
+function updateAccountStatusUI(centerData) {
+    const statusEl = document.getElementById('account-status');
+    const syncIndicator = document.getElementById('sync-status-indicator');
+    const newEntryBtn = document.querySelector('header button');
+    const nameEl = document.getElementById('display-center-name');
+    const initialsEl = document.getElementById('center-initials');
+    
+    // 1. Update the Center Name
+    if (centerData.name) {
+        nameEl.innerText = centerData.name;
+        
+        const initials = centerData.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        initialsEl.innerText = initials.substring(0, 2);
+    }
+
+    // DUAL-KEY LOGIC:
+    // 1. Manual Switch (Postgres 't' or boolean true)
+    const isSwitchedOn = (centerData.payment_status === true || centerData.payment_status === 't');
+    
+    // 2. Timer (Is the expiry date in the future?)
+    const now = new Date();
+    const expiryDate = new Date(centerData.payment_expiry);
+    const isNotExpired = expiryDate > now;
+
+    // Must satisfy BOTH to be active
+    const isActive = isSwitchedOn && isNotExpired;
+
+    if (isActive) {
+        statusEl.innerText = "Active";
+        statusEl.className = "text-xl font-bold text-green-600 uppercase";
+        if(newEntryBtn) {
+            newEntryBtn.disabled = false;
+            newEntryBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            newEntryBtn.classList.add('bg-blue-600');
+            newEntryBtn.onclick = () => location.href='new_inspection.html';
+            if(syncIndicator) syncIndicator.innerText = "● Desktop Sync: Connected";
+                     
+        }
+    } else {
+        statusEl.innerText = "Blocked";
+        statusEl.className = "text-xl font-bold text-red-600 uppercase";
+        if(newEntryBtn) {
+            newEntryBtn.classList.remove('bg-blue-600');
+            newEntryBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            newEntryBtn.onclick = (e) => {
+                e.preventDefault();
+                alert("Account Blocked. Please contact Admin for payment approval.");
+            if(syncIndicator) syncIndicator.innerText = "○ Desktop Sync: Suspended (Payment Required)";
+    
+            };
+        }
+    }
+}
+// Helper function to get a clean local date string (YYYY-MM-DD)
+function getLocalDay(dateInput) {
+    const d = new Date(dateInput);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+function setupCardFilters() {
+    // Get current local day
+    const localToday = getLocalDay(new Date());
+    
+    // Filter all data for today first
+    const todayData = allInspections.filter(i => getLocalDay(i.inspection_date) === localToday);
+
+    // 1. Click Total Card
+    document.getElementById('card-total').onclick = () => {
+        updateRecentTable(todayData);
+        highlightActiveCard('card-total');
+    };
+
+    // 2. Click Passed Card
+    document.getElementById('card-passed').onclick = () => {
+        const passedData = todayData.filter(i => i.result === 'PASS');
+        updateRecentTable(passedData);
+        highlightActiveCard('card-passed');
+    };
+
+    // 3. Click Failed Card
+    document.getElementById('card-failed').onclick = () => {
+        const failedData = todayData.filter(i => i.result === 'FAIL' || i.result === 'FAILED');
+        console.log("Failed items found:", failedData.length); // Debugging
+        updateRecentTable(failedData);
+        highlightActiveCard('card-failed');
+    };
+}
+
+function highlightActiveCard(activeId) {
+    const cards = ['card-total', 'card-passed', 'card-failed'];
+    cards.forEach(id => {
+        const el = document.getElementById(id);
+        if (id === activeId) {
+            el.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+        } else {
+            el.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50');
+        }
+    });
+}
+// Function to calculate fuel types from the inspection list
+function renderFuelChartFromData(data) {
+    const ctx = document.getElementById('fuelChart').getContext('2d');
+    
+    // Destroy previous instance to fix the "repeating labels" bug
+    if (fuelChartInstance) {
+        fuelChartInstance.destroy();
+    }
+
+    // Count occurrences of each fuel type
+    const fuelCounts = {};
+    data.forEach(item => {
+        const type = item.fuel_type ? item.fuel_type.toUpperCase() : 'UNKNOWN';
+        fuelCounts[type] = (fuelCounts[type] || 0) + 1;
+    });
+
+    const labels = Object.keys(fuelCounts);
+    const counts = Object.values(fuelCounts);
+
+    fuelChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: ['#3b82f6', '#1e293b', '#10b981', '#f59e0b', '#8b5cf6'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: { 
+            cutout: '70%', 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } } 
+        }
+    });
+}
+
+// Function to calculate Pass/Fail counts from the inspection list
+function renderStatusChartFromData(data) {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+    }
+
+    const passed = data.filter(i => i.result === 'PASS').length;
+    const failed = data.length - passed;
+
+    statusChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['PASS', 'FAIL'],
+            datasets: [{
+                label: 'Total Results',
+                data: [passed, failed],
+                backgroundColor: ['#10b981', '#ef4444']
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } } 
+        }
+    });
+}
+
+function updateStatCards(data) {
+    // 1. Get today's date in YYYY-MM-DD format based on the user's local time
+    const now = new Date();
+    const todayStr = now.getFullYear() + '-' + 
+                     String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(now.getDate()).padStart(2, '0');
+    
+    // 2. Filter data by comparing only the DATE portion
+    const todayData = data.filter(i => {
+        // Convert the database timestamp (ISO string) to YYYY-MM-DD
+        const inspectionDate = new Date(i.inspection_date);
+        const inspectionStr = inspectionDate.getFullYear() + '-' + 
+                              String(inspectionDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                              String(inspectionDate.getDate()).padStart(2, '0');
+        
+        return inspectionStr === todayStr;
+    });
+    
+    // 3. Calculate totals from the filtered list
+    const total = todayData.length;
+    const passed = todayData.filter(i => i.result === 'PASS').length;
+    const failed = total - passed;
+
+    // 4. Update the UI
+    if(document.getElementById('total-today')) document.getElementById('total-today').innerText = total;
+    if(document.getElementById('passed-today')) document.getElementById('passed-today').innerText = passed;
+    if(document.getElementById('failed-today')) document.getElementById('failed-today').innerText = failed;
+
+    const rateElement = document.getElementById('success-rate');
+    if (rateElement) {
+        const rate = total > 0 ? ((passed / total) * 100).toFixed(0) : 0;
+        rateElement.innerText = `${rate}% Success Rate`;
+    }
+}
+
+function updateRecentTable(data) {
+    const tbody = document.querySelector('tbody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">No records found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.slice(0, 8).map(i => `
+        <tr class="hover:bg-gray-50 transition">
+            <td class="p-4">
+                <div class="font-bold text-slate-700">${i.plate_number || 'N/A'}</div>
+                <div class="text-xs text-gray-400 font-mono">ID: ${i.inspection_id}</div>
+            </td>
+            <td class="p-4 text-gray-600">${i.fuel_type || 'N/A'}</td>
+            <td class="p-4 text-gray-600">${i.chassis_number || 'N/A'}</td>
+            <td class="p-4 text-gray-600">${i.engine_number || 'N/A'}</td>
+            <td class="p-4">
+                <span class="px-2 py-1 ${i.result === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} rounded-full text-xs font-bold">
+                    ${i.result}
+                </span>
+            </td>
+            <td class="p-4 text-gray-500">${new Date(i.inspection_date).toLocaleDateString()}</td>
+            
+        </tr>
+    `).join('');
+}
+function logout() {
+            if(confirm("Logout?")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+    </script>
+</body>
+</html>
