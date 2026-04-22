@@ -16,6 +16,12 @@ const app = express();
 app.use(cors());
 app.use(express.json()); 
 app.use(express.static('public'));
+const path = require('path');
+
+// Add this route to explicitly serve login.html at the root
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
 
 // Routes
 app.use("/api/admin", adminRoutes);
