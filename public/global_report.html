@@ -103,7 +103,7 @@
         async function init() {
             const token = localStorage.getItem('token');
             try {
-                const res = await fetch('http://localhost:5000/api/admin/inspections/all', {
+                const res = await fetch('/api/admin/inspections/all', {
                     method: 'GET',
                     headers: { 
                         'Authorization': `Bearer ${token}`,

@@ -132,13 +132,13 @@
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                 };
 
-                const statRes = await fetch('http://localhost:5000/api/admin/stats', requestOptions);
+                const statRes = await fetch('/api/admin/stats', requestOptions);
                 const stats = await statRes.json();
                 document.getElementById('stat-centers').innerText = stats.total_centers || 0;
                 document.getElementById('stat-inspections').innerText = stats.total_inspections || 0;
                 document.getElementById('stat-revenue').innerText = `${stats.total_receivable || 0} ETB`;
 
-                const centerRes = await fetch('http://localhost:5000/api/admin/centers', requestOptions);
+                const centerRes = await fetch('/api/admin/centers', requestOptions);
                 allCenters = await centerRes.json();
                 
                 const centersOnly = allCenters.filter(user => user.role !== 'admin');
@@ -221,7 +221,7 @@ async function saveChanges() {
         payment_status: document.getElementById('edit-status').value === "true"
     };
     // 2. Update the Fee specifically
-    await fetch(`http://localhost:5000/api/admin/centers/fee/${id}`, {
+    await fetch(`/api/admin/centers/fee/${id}`, {
         method: 'PUT',
         headers: { 
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -232,7 +232,7 @@ async function saveChanges() {
 
     try {
         // Double check this URL structure matches your backend route exactly
-        const res = await fetch(`http://localhost:5000/api/admin/centers/${id}`, {
+        const res = await fetch(`/api/admin/centers/${id}`, {
             method: 'PUT',
             headers: { 
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -257,7 +257,7 @@ async function saveChanges() {
             const id = document.getElementById('edit-id').value;
             if(!confirm("Are you absolutely sure? This will delete all inspection records for this center.")) return;
 
-            const res = await fetch(`http://localhost:5000/api/admin/centers/${id}`, {
+            const res = await fetch(`/api/admin/centers/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
@@ -282,7 +282,7 @@ async function saveChanges() {
         billing_end: '2026-04-30'    // Replace with your input value
     };
 
-    const res = await fetch(`http://localhost:5000/api/admin/centers/approve/${id}`, {
+    const res = await fetch(`/api/admin/centers/approve/${id}`, {
         method: 'PUT',
         headers: { 
             'Content-Type': 'application/json', // CRITICAL: Tells server to parse JSON
@@ -312,7 +312,7 @@ async function saveChanges() {
                 username: document.getElementById('centerUser').value,
                 password: document.getElementById('centerPass').value
             };
-            const res = await fetch('http://localhost:5000/api/admin/centers/add', {
+            const res = await fetch('/api/admin/centers/add', {
                 method: 'POST',
                 headers: { 
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,

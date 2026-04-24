@@ -86,7 +86,7 @@ async function loadPaymentData() {
         const centerId = localStorage.getItem('center_id');
         const token = localStorage.getItem('token');
 
-        const response = await fetch(`http://localhost:5000/api/dashboard/centers/${centerId}`, {
+        const response = await fetch(`/api/dashboard/centers/${centerId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -128,7 +128,7 @@ async function loadPaymentHistory(centerId) {
     if (!tableBody) return; // Prevents the 'null' error if element is missing
 
     try {
-        const response = await fetch(`http://localhost:5000/api/payments/payment-history/${centerId}`);
+        const response = await fetch(`/api/payments/payment-history/${centerId}`);
         const history = await response.json();
 
         if (!history || history.length === 0) {
