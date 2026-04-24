@@ -11,7 +11,11 @@
 <body class="bg-gray-50 font-sans">
 
     <div class="flex h-screen overflow-hidden">
-        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
+        <aside id="sidebar" class="hidden md:flex flex-col w-64 bg-slate-900 text-white h-screen fixed md:relative z-50">
+            <div class="md:hidden p-4 text-right">
+                <button onclick="toggleSidebar()"><i class="fas fa-times text-2xl"></i></button>
+            </div>
+            
             <div class="p-6 text-2xl font-bold border-b border-slate-700 italic">
                 <i class="fas fa-car-side text-blue-400 mr-2"></i>AutoCheck
             </div>
@@ -20,17 +24,17 @@
                 <a href="report.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-file-invoice mr-3"></i> Reports</a>
                 <a href="payment.html" class="flex items-center p-3 hover:bg-slate-800 rounded-lg transition"><i class="fas fa-credit-card mr-3"></i> Payments</a>
                 <button onclick="logout()" class="w-full text-left p-3 hover:bg-slate-800 rounded-lg text-red-400 mt-10">
-                 <i class="fas fa-power-off mr-2"></i> Logout
-            </button>
+                    <i class="fas fa-power-off mr-2"></i> Logout
+                </button>
             </nav>
             <div class="p-4 border-t border-slate-700">
                 <div class="flex items-center space-x-3">
                     <div id="center-initials" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">
-                      AC
+                        AC
                     </div>
                     <div>
-                       <p id="display-center-name" class="text-sm font-medium">Loading...</p>
-                    <p id="display-center-id" class="text-xs text-gray-400">Center ID: --</p>
+                        <p id="display-center-name" class="text-sm font-medium">Loading...</p>
+                        <p id="display-center-id" class="text-xs text-gray-400">Center ID: --</p>
                     </div>
                 </div>
             </div>
@@ -38,37 +42,38 @@
 
         <main class="flex-1 overflow-y-auto">
             <header class="bg-white shadow-sm p-4 flex justify-between items-center">
-                <h1 class="text-xl font-semibold text-gray-800">Inspection Overview</h1>
-                <button onclick="location.href='inspection.html'" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                    <i class="fas fa-plus mr-2"></i>New Entry
+                <button onclick="toggleSidebar()" class="md:hidden text-2xl text-slate-700">
+                    <i class="fas fa-bars"></i>
                 </button>
+                <h1 class="text-xl font-semibold text-gray-800">Inspection Overview</h1>
+                <div class="md:hidden w-8"></div>
             </header>
 
             <div class="p-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div id="card-total" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-blue-400 transition">
-        <p class="text-gray-500 text-sm">Today's Total</p>
-        <h2 id="total-today" class="text-2xl font-bold">0</h2>
-        <span class="text-blue-500 text-xs">View All Today</span>
-    </div>
-    
-    <div id="card-passed" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-green-400 transition">
-        <p class="text-gray-500 text-sm text-green-600">Passed</p>
-        <h2 id="passed-today" class="text-2xl font-bold text-green-700">0</h2>
-        <span class="text-gray-400 text-xs">View Passed</span>
-    </div>
-    
-    <div id="card-failed" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-red-400 transition">
-        <p class="text-gray-500 text-sm text-red-600">Failed</p>
-        <h2 id="failed-today" class="text-2xl font-bold text-red-700">0</h2>
-        <span class="text-gray-400 text-xs">View Failed</span>
-    </div>
-    
-    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <p class="text-gray-500 text-sm text-blue-600">Account Status</p>
-        <h2 id="account-status" class="text-xl font-bold text-blue-700 uppercase">Active</h2>
-    </div>
-</div>
+                    <div id="card-total" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-blue-400 transition">
+                        <p class="text-gray-500 text-sm">Today's Total</p>
+                        <h2 id="total-today" class="text-2xl font-bold">0</h2>
+                        <span class="text-blue-500 text-xs">View All Today</span>
+                    </div>
+                    
+                    <div id="card-passed" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-green-400 transition">
+                        <p class="text-gray-500 text-sm text-green-600">Passed</p>
+                        <h2 id="passed-today" class="text-2xl font-bold text-green-700">0</h2>
+                        <span class="text-gray-400 text-xs">View Passed</span>
+                    </div>
+                    
+                    <div id="card-failed" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:border-red-400 transition">
+                        <p class="text-gray-500 text-sm text-red-600">Failed</p>
+                        <h2 id="failed-today" class="text-2xl font-bold text-red-700">0</h2>
+                        <span class="text-gray-400 text-xs">View Failed</span>
+                    </div>
+                    
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-gray-500 text-sm text-blue-600">Account Status</p>
+                        <h2 id="account-status" class="text-xl font-bold text-blue-700 uppercase">Active</h2>
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -89,28 +94,33 @@
                     <div class="p-4 border-b bg-gray-50">
                         <h3 class="font-bold text-gray-700">Recent Inspections</h3>
                     </div>
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-gray-400 text-sm uppercase bg-gray-50">
-                                <th class="p-4 font-medium">Plate Number</th>
-                                <th class="p-4 font-medium">Fuel Type</th>
-                                <th class="p-4 font-medium">Chassis_number</th>
-                                <th class="p-4 font-medium">Engine_number</th>
-                                <th class="p-4 font-medium">Status</th>
-                                <th class="p-4 font-medium">Date</th>
-                                
-                            </tr>
-                        </thead>
-                        <tbody id="inspectionTable" class="divide-y divide-gray-100 text-sm">
+                    <div class="overflow-x-auto border border-gray-100 rounded-xl shadow-sm">
+                        <table class="w-full text-left border-collapse min-w-[700px]"> 
+                            <thead class="bg-gray-50">
+                                <tr class="text-gray-400 text-sm uppercase">
+                                    <th class="p-4 font-medium whitespace-nowrap">Plate Number</th>
+                                    <th class="p-4 font-medium whitespace-nowrap">Fuel Type</th>
+                                    <th class="p-4 font-medium whitespace-nowrap">Chassis_number</th>
+                                    <th class="p-4 font-medium whitespace-nowrap">Engine_number</th>
+                                    <th class="p-4 font-medium whitespace-nowrap">Status</th>
+                                    <th class="p-4 font-medium whitespace-nowrap">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inspectionTable" class="divide-y divide-gray-100 text-sm">
                             <tr><td colspan="5" class="p-4 text-center">Loading...</td></tr>
                         </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </main>
-    </div>
 
     <script>
+
+ function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
 const API_BASE = "/api";
 const center_id = localStorage.getItem("center_id");
 // Global variables to track chart instances and prevent repetition
@@ -128,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     initDashboard();
 });
+
 let allInspections = []; // Store the full list globally
 async function initDashboard() {
     const token = localStorage.getItem('token');
