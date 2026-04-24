@@ -217,27 +217,11 @@ function updateAccountStatusUI(centerData) {
     if (isActive) {
         statusEl.innerText = "Active";
         statusEl.className = "text-xl font-bold text-green-600 uppercase";
-        if(newEntryBtn) {
-            newEntryBtn.disabled = false;
-            newEntryBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-            newEntryBtn.classList.add('bg-blue-600');
-            newEntryBtn.onclick = () => location.href='inspection_dashboard.html';
-            if(syncIndicator) syncIndicator.innerText = "● Desktop Sync: Connected";
-                     
-        }
+       
     } else {
         statusEl.innerText = "Blocked";
         statusEl.className = "text-xl font-bold text-red-600 uppercase";
-        if(newEntryBtn) {
-            newEntryBtn.classList.remove('bg-blue-600');
-            newEntryBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-            newEntryBtn.onclick = (e) => {
-                e.preventDefault();
-                alert("Account Blocked. Please contact Admin for payment approval.");
-            if(syncIndicator) syncIndicator.innerText = "○ Desktop Sync: Suspended (Payment Required)";
-    
-            };
-        }
+       
     }
 }
 // Helper function to get a clean local date string (YYYY-MM-DD)
